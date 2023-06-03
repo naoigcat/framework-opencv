@@ -1,7 +1,7 @@
 require "open-uri"
 Pod::Spec.new do |s|
   s.name                = "OpenCVFramework"
-  s.version             = "4.5.4"
+  s.version             = "4.5.5"
   s.summary             = "OpenCV (Computer Vision) for iOS."
   s.homepage            = "https://opencv.org"
   s.description         = URI.open("https://raw.githubusercontent.com/opencv/opencv/#{s.version}/README.md", &:read).gsub(/.*Gittip.*\n\n/, "")
