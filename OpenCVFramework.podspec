@@ -1,7 +1,7 @@
 require "open-uri"
 Pod::Spec.new do |s|
   s.name                = "OpenCVFramework"
-  s.version             = "4.5.0"
+  s.version             = "4.5.1"
   s.summary             = "OpenCV (Computer Vision) for iOS."
   s.homepage            = "https://opencv.org"
   s.description         = URI.open("https://raw.githubusercontent.com/opencv/opencv/#{s.version}/README.md", &:read).gsub(/.*Gittip.*\n\n/, "")
@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.source              = { :http => "https://github.com/opencv/opencv/releases/download/#{s.version}/opencv-#{s.version}-ios-framework.zip" }
   s.platform            = :ios, URI.open("https://raw.githubusercontent.com/opencv/opencv/#{s.version}/platforms/ios/build_framework.py", &:read).match(/(?<=IPHONEOS_DEPLOYMENT_TARGET=)'?[0-9.]+'?/).to_s.gsub(/'/, "")
   s.requires_arc        = true
-  s.swift_version       = "5.0"
+  s.swift_version       = "5.3"
   s.preserve_paths      = "opencv2.framework"
   s.source_files        = "opencv2.framework/Versions/A/Headers/**/*{.h,.hpp}"
   s.public_header_files = "opencv2.framework/Versions/A/Headers/**/*{.h,.hpp}"
@@ -19,4 +19,6 @@ Pod::Spec.new do |s|
   s.header_mappings_dir = "opencv2.framework/Versions/A/Headers/"
   s.libraries           = "stdc++"
   s.frameworks          = "Accelerate", "AssetsLibrary", "AVFoundation", "CoreGraphics", "CoreImage", "CoreMedia", "CoreVideo", "Foundation", "QuartzCore", "UIKit"
+  s.pod_target_xcconfig = { "EXCLUDED_ARCHS[sdk=iphonesimulator*]" => "arm64" }
+  s.user_target_xcconfig = { "EXCLUDED_ARCHS[sdk=iphonesimulator*]" => "arm64" }
 end
