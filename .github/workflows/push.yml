@@ -1,0 +1,28 @@
+name: Push to CocoaPods
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_11.7.app
+
+jobs:
+  push:
+    runs-on: macos-11
+    steps:
+      - name: Show Xcode list
+        run: ls /Applications | grep 'Xcode'
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install bundled Gems
+        run: bundle install --without=documentation --jobs 4 --retry 3
+      - name: Lint
+        run: bundle exec pod spec lint --allow-warnings --verbose
+      - name: Deploy
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: >-
+          bundle exec pod trunk info OpenCVFramework | grep "\- ${GITHUB_REF##*/} " ||
+          bundle exec pod trunk push --allow-warnings --verbose
