@@ -42,7 +42,31 @@ jobs:
                 sed -i -e /s.requires_arc/s/false/true/ *.podspec
                 if test $(find opencv2.framework/Modules/opencv2.swiftmodule -type f -name \*.swiftinterface | wc -l) -gt 0
                 then
-                  sed -i -e $'/s.requires_arc/a\\\n  s.swift_version       = "'$(grep -Po '(?<=Swift version )[0-9][0-9]*\.[0-9][0-9]*' $(find opencv2.framework/Modules/opencv2.swiftmodule -type f -name \*.swiftinterface | head -n 1))'"' *.podspec
+                  swift_version=$(grep -Po '(?<=Swift version )[0-9][0-9]*\.[0-9][0-9]*' $(find opencv2.framework/Modules/opencv2.swiftmodule -type f -name \*.swiftinterface | head -n 1))
+                  case $swift_version in
+                    5.3 ) xcode_version=12.5.1 ;;
+                    5.4 ) xcode_version=12.5.1 ;;
+                    5.5 ) xcode_version=13.4.1 ;;
+                    5.6 ) xcode_version=13.4.1 ;;
+                    5.7 ) xcode_version=14.3.1 ;;
+                    5.8 ) xcode_version=14.3.1 ;;
+                    * ) xcode_version=11.7.0 ;;
+                  esac
+                  case $xcode_version in
+                    12.5.1 ) macos_version=11 ;;
+                    13.4.1 ) macos_version=12 ;;
+                    14.3.1 ) macos_version=13 ;;
+                    * ) macos_version=11 ;;
+                  esac
+                  if test ${xcode_version%%.*} -ge 12
+                  then
+                    sed -i -e /target_xcconfig/d *.podspec
+                    sed -i -e $'/^end$/i\\\n  s.pod_target_xcconfig = { "EXCLUDED_ARCHS[sdk=iphonesimulator*]" => "arm64" }' *.podspec
+                    sed -i -e $'/^end$/i\\\n  s.user_target_xcconfig = { "EXCLUDED_ARCHS[sdk=iphonesimulator*]" => "arm64" }' *.podspec
+                  fi
+                  sed -i -e s/Xcode_\[0-9.\]\*\[0-9\]/Xcode_$xcode_version/ .github/workflows/push.yml
+                  sed -i -e s/macos-\[0-9.\]\*\[0-9\]/macos-$macos_version/ .github/workflows/push.yml
+                  sed -i -e $'/s.requires_arc/a\\\n  s.swift_version       = "'$swift_version'"' *.podspec
                 else
                   sed -i -e $'/s.requires_arc/a\\\n  s.swift_version       = "5.0"' *.podspec
                 fi
@@ -50,7 +74,7 @@ jobs:
               rm -fr opencv2.framework opencv-${version}-ios-framework.zip
               sed -i -e s/\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*/$version/ *.podspec
               sed -i -e s/\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*/$version/ README.md
-              echo git add *.podspec README.md | tee /dev/stderr | source /dev/stdin
+              echo git add .github/workflows/push.yml *.podspec README.md | tee /dev/stderr | source /dev/stdin
               echo git commit -m \"Bump version to $version\" | tee /dev/stderr | source /dev/stdin
               echo git tag $version | tee /dev/stderr | source /dev/stdin
               echo git push origin | tee /dev/stderr | source /dev/stdin
