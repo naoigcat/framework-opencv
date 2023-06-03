@@ -1,0 +1,46 @@
+name: Bump Version
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.SSH_KEY }}
+          fetch-depth: 0
+      -
+        name: Bump
+        run: |
+          for branch in 3.x 4.x
+          do
+            git checkout $branch
+            version=$(
+              curl -fsSL -H 'Accept: application/vnd.github+json' -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/opencv/opencv/releases |
+              jq -r '.[].tag_name' |
+              sed -e /$(git describe --tags --abbrev=0)/q |
+              sed -e \$d |
+              grep ^$(git symbolic-ref --short HEAD | sed -e s/\\.x//)\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*$ |
+              tail -n 1
+            )
+            if test -n "$version"
+            then
+              echo $version
+              git config --global user.name github-actions\[bot\]
+              git config --global user.email github-actions\[bot\]@users.noreply.github.com
+              sed -i -e s/\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*/$version/ *.podspec
+              sed -i -e s/\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*/$version/ README.md
+              echo git add *.podspec README.md | tee /dev/stderr | source /dev/stdin
+              echo git commit -m \"Bump version to $version\" | tee /dev/stderr | source /dev/stdin
+              echo git tag $version | tee /dev/stderr | source /dev/stdin
+              echo git push origin | tee /dev/stderr | source /dev/stdin
+              echo git push origin --tags | tee /dev/stderr | source /dev/stdin
+              sleep 120
+            fi
+          done
