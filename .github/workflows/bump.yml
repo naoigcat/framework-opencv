@@ -34,6 +34,20 @@ jobs:
               echo $version
               git config --global user.name github-actions\[bot\]
               git config --global user.email github-actions\[bot\]@users.noreply.github.com
+              echo curl -fsSLO https://github.com/opencv/opencv/releases/download/${version}/opencv-${version}-ios-framework.zip | tee /dev/stderr | source /dev/stdin
+              echo unzip opencv-${version}-ios-framework.zip | tee /dev/stderr | source /dev/stdin
+              sed -i -e /s.swift_version/d *.podspec
+              if test $(find opencv2.framework/Modules/opencv2.swiftmodule -type f -name \*.swiftmodule | wc -l) -gt 0
+              then
+                sed -i -e /s.requires_arc/s/false/true/ *.podspec
+                if test $(find opencv2.framework/Modules/opencv2.swiftmodule -type f -name \*.swiftinterface | wc -l) -gt 0
+                then
+                  sed -i -e $'/s.requires_arc/a\\\n  s.swift_version       = "'$(grep -Po '(?<=Swift version )[0-9][0-9]*\.[0-9][0-9]*' $(find opencv2.framework/Modules/opencv2.swiftmodule -type f -name \*.swiftinterface | head -n 1))'"' *.podspec
+                else
+                  sed -i -e $'/s.requires_arc/a\\\n  s.swift_version       = "5.0"' *.podspec
+                fi
+              fi
+              rm -fr opencv2.framework opencv-${version}-ios-framework.zip
               sed -i -e s/\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*/$version/ *.podspec
               sed -i -e s/\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*\\.\[0-9\]\[0-9\]\*/$version/ README.md
               echo git add *.podspec README.md | tee /dev/stderr | source /dev/stdin
