@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  DEVELOPER_DIR: /Applications/Xcode_11.7.app
+  DEVELOPER_DIR: /Applications/Xcode_12.5.1.app
 
 jobs:
   push:
