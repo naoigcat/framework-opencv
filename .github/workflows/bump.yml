@@ -18,9 +18,12 @@ jobs:
       -
         name: Bump
         run: |
-          for branch in 3.x 4.x
+          git config --global user.name github-actions\[bot\]
+          git config --global user.email github-actions\[bot\]@users.noreply.github.com
+          versions=$(git branch -r --format='%(refname:short)' | sed -e 's/origin\///' | grep -v main | sort -t '.' -k 1,1n)
+          for branch in $versions
           do
-            git checkout $branch
+            echo git checkout $branch | tee /dev/stderr | source /dev/stdin
             version=$(
               curl -fsSL -H 'Accept: application/vnd.github+json' -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/opencv/opencv/releases |
               jq -r '.[].tag_name' |
@@ -32,8 +35,6 @@ jobs:
             if test -n "$version"
             then
               echo $version
-              git config --global user.name github-actions\[bot\]
-              git config --global user.email github-actions\[bot\]@users.noreply.github.com
               echo curl -fsSLO https://github.com/opencv/opencv/releases/download/${version}/opencv-${version}-ios-framework.zip | tee /dev/stderr | source /dev/stdin
               echo unzip opencv-${version}-ios-framework.zip | tee /dev/stderr | source /dev/stdin
               sed -i -e /s.swift_version/d *.podspec
@@ -82,3 +83,6 @@ jobs:
               sleep 120
             fi
           done
+          echo git checkout main | tee /dev/stderr | source /dev/stdin
+          echo git merge --no-ff --no-edit $(echo $versions | awk 'END{print $NF}') | tee /dev/stderr | source /dev/stdin
+          echo git push origin | tee /dev/stderr | source /dev/stdin
