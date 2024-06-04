@@ -18,4 +18,4 @@ pod 'OpenCVFramework'
 
 ## Usage
 
-See <https://docs.opencv.org/4.9.0/>
+See <https://docs.opencv.org/4.10.0/>
